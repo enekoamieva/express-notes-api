@@ -34,11 +34,6 @@ let notes = [
     },
 ];
 
-/* const app = http.createServer((req, res) => {
-    res.writeHead(200, { 'content-type': 'text/json' });
-    res.end(JSON.stringify(notes));
-}) */
-
 app.get('/', (req, res) => {
     res.send('<h1>Hello World!</h1>');
 });
