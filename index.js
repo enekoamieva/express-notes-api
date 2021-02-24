@@ -70,7 +70,7 @@ app.delete('/api/notes/:id', (req, res) => {
     }
 });
 
-app.put('/api/notes/:id', (req, res) => {
+app.put('/api/notes/:id', (req, res, newNote) => {
     const noteReq = req.body;
 
     const id = Number(req.params.id);
@@ -78,7 +78,7 @@ app.put('/api/notes/:id', (req, res) => {
 
     notes.map(note => {
         if (note.id === id) {
-            note.title = noteReq.title
+            note = newNote
         }
 
         return note;
