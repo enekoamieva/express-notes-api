@@ -15,22 +15,26 @@ let notes = [
     {
         'id': 1,
         'title': 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
-        'date': '2019-05-30T19:20:14.298Z'
+        'date': '2019-05-30T19:20:14.298Z',
+        'important': true
     },
     {
         'id': 2,
         'title': 'qui est esse',
-        'date': '2019-012-24T19:20:14.298Z'
+        'date': '2019-012-24T19:20:14.298Z',
+        'important': false
     },
     {
         'id': 3,
         'title': 'ea molestias quasi exercitationem repellat qui ipsa sit aut',
-        'date': '2020-01-01T00:20:14.298Z'
+        'date': '2020-01-01T00:20:14.298Z',
+        'important': false
     },
     {
         'id': 4,
         'title': 'eum et est occaecati',
-        'date': '2029-05-26T19:20:14.298Z'
+        'date': '2029-05-26T19:20:14.298Z',
+        'important': false
     },
 ];
 
@@ -64,6 +68,23 @@ app.delete('/api/notes/:id', (req, res) => {
     } else {
         res.status(404).end('No se ha encontrado la nota');
     }
+});
+
+app.put('/api/notes/:id', (req, res) => {
+    const noteReq = req.body;
+
+    const id = Number(req.params.id);
+    console.log(noteReq.title);
+
+    notes.map(note => {
+        if (note.id === id) {
+            note.title = noteReq.title
+        }
+
+        return note;
+    })
+
+    res.send(noteReq);
 });
 
 app.post('/api/notes', (req, res) => {
