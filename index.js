@@ -1,101 +1,96 @@
-const { request } = require('express');
+//Para tomar  las variables de entorno creadas en el fichero .env
+require('dotenv').config();
+
 const express = require('express');
+
+//Importamos la conexión al servidor de MongoDB
+require('./mongo.js');
 
 //Permitr el acceso a los datos de peticiones externas
 const cors = require('cors');
-
+//Inicializar servidor
 const app = express();
-
 //Cualquier origen va a funcionar en nuestra API
 app.use(cors())
-
+//Permitir el uso de Json al servidor
 app.use(express.json());
+//Ruta para poder servir estáticos en nuestro servidor
+app.use('/images', express.static('images'));
 
-let notes = [
-    {
-        'id': 1,
-        'title': 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
-        'date': '2019-05-30T19:20:14.298Z',
-        'important': true
-    },
-    {
-        'id': 2,
-        'title': 'qui est esse',
-        'date': '2019-012-24T19:20:14.298Z',
-        'important': false
-    },
-    {
-        'id': 3,
-        'title': 'ea molestias quasi exercitationem repellat qui ipsa sit aut',
-        'date': '2020-01-01T00:20:14.298Z',
-        'important': false
-    },
-    {
-        'id': 4,
-        'title': 'eum et est occaecati',
-        'date': '2029-05-26T19:20:14.298Z',
-        'important': false
-    },
-];
+//Importar el modelo de Notas para Mongo
+const NoteModel = require('./models/Note.js');
+
 
 app.get('/', (req, res) => {
     res.send('<h1>Hello World!</h1>');
 });
 
 app.get('/api/notes', (req, res) => {
-    res.json(notes);
-});
-
-app.get('/api/notes/:id', (req, res) => {
-    const id = Number(req.params.id);
-
-    const noteID = notes.find(note => note.id === id);
-
-    if (noteID) {
-        res.json(noteID);
-    } else {
-        res.status(404).end('No se ha encontrado la nota');
-    }
-});
-
-app.delete('/api/notes/:id', (req, res) => {
-    const id = Number(req.params.id);
-
-    notes = notes.filter(note => note.id !== id);
-
-    if (notes) {
-        res.status(204).end();
-    } else {
-        res.status(404).end('No se ha encontrado la nota');
-    }
-});
-
-app.put('/api/notes/:id', (req, res, newNote) => {
-    const { updateNote } = req.body;
-
-    const id = Number(req.params.id);
-    console.log(id);
-    console.log(updateNote);
-
-    notes = notes.map(note => {
-        if (note.id === id) {
-            note = updateNote
-            console.log(note);
-        }
-
-        console.log(note);
-        return note;
+    NoteModel.find({}).then(note => {
+        res.json(note);
     })
+});
 
-    res.send(updateNote);
+app.get('/api/notes/:id', (req, res, next) => {
+    const id = req.params.id;
+
+    //Comprobación de la nota a consultar
+    NoteModel.findById(id)
+        .then(note => {
+            if (note) {
+                return res.json(note);
+            } else {
+                res.status(404).end('No se ha encontrado la nota');
+            }
+        })
+        .catch(err => next(err));
+});
+
+app.delete('/api/notes/:id', (req, res, next) => {
+    const id = req.params.id;
+
+    NoteModel.findByIdAndRemove(id)
+        .then(note => {
+            if (note) {
+                return res.status(204).end('Nota eliminada');
+            } else {
+                res.status(404).end('No se ha encontrado la nota');
+            }
+
+        })
+        .catch(err => next(err));
+});
+
+app.put('/api/notes/:id', (req, res, next) => {
+    const note = req.body;
+    const id = req.params.id;
+
+    if (!note || !note.title || !note.content) {
+        return res.status(400).json({
+            error: 'note.title or note.content is missing'
+        });
+    }
+
+    const updateNote = {
+        ...note,
+        title: note.title,
+        content: note.content,
+        important: note.important,
+    }
+
+    NoteModel.findByIdAndUpdate(id, updateNote, { new: true })
+        .then(result => {
+            return res.json(result);
+        })
+        .catch(err => next(err));
 });
 
 app.post('/api/notes', (req, res) => {
     const note = req.body;
 
     //Obtener la ultima ID de un post
-    const ids = notes.map(note => note.id);
-    const maxId = Math.max(...ids);
+    //const ids = notes.map(note => note.id);
+    //const maxId = Math.max(...ids);
 
     if (!note || !note.title) {
         return res.status(400).json({
@@ -103,15 +98,30 @@ app.post('/api/notes', (req, res) => {
         });
     }
 
-    const newNote = {
-        id: maxId + 1,
+    //Obtenemos los datos que llegan al servidor y los guardamos creando una instancia del modelo
+    const newNote = new NoteModel({
         title: note.title,
-        date: note.date
-    };
+        content: note.content,
+        date: new Date(),
+        important: note.important
+    });
 
-    notes = [...notes, newNote];
-    res.send(note);
+    //Guardamos la información en MongoDB
+    newNote.save().then(savedNote => {
+        res.json(savedNote);
+    });
 
+});
+
+//Middleware para capturar los errores. All poner como primer parametro ERROR un CATCH con error buscará este middleware
+app.use((error, req, res, next) => {
+    console.error(error);
+    //console.log(error.name);
+    if (error.name === 'CastError') {
+        return res.status(400).end('Petición incorrecta!! La id usada no está bien');
+    } else {
+        return res.status(500).end();
+    }
 });
 
 //Error 404
