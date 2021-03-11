@@ -40,7 +40,7 @@ app.get('/api/notes/:id', (req, res, next) => {
             if (note) {
                 return res.json(note);
             } else {
-                res.status(404).end('No se ha encontrado la nota');
+                return res.status(404).end('No se ha encontrado la nota');
             }
         })
         .catch(err => next(err));
@@ -54,7 +54,7 @@ app.delete('/api/notes/:id', (req, res, next) => {
             if (note) {
                 return res.status(204).end('Nota eliminada');
             } else {
-                res.status(404).end('No se ha encontrado la nota');
+                return res.status(404).end('No se ha encontrado la nota');
             }
 
         })
@@ -132,6 +132,10 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
+
+//Exportar APP
+module.exports = { app, server };
