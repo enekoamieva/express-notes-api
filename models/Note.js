@@ -5,7 +5,11 @@ const noteSchema = new Schema({
     content: String,
     title: String,
     date: Date,
-    important: { type: Boolean, default: false }
+    important: { type: Boolean, default: false },
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+    }
 });
 
 //Transformas nuestro Schema para que devuelva el valor del objeto id a parte del valor _id que setea por defecto Mongodb
