@@ -47,25 +47,23 @@ notesRouter.delete('/:id', userExtractor, (req, res, next) => {
 });
 
 notesRouter.put('/:id', (req, res, next) => {
-    const note = req.body;
+    const note = req.body.updateNote;
     const id = req.params.id;
 
-    if (!note || !note.title || !note.content) {
-        return res.status(400).json({
-            error: 'note.title or note.content is missing'
-        });
-    }
+    /*     if (!note || !note.title || !note.content) {
+            return res.status(400).json({
+                error: 'note.title or note.content is missing'
+            });
+        } */
 
     const updateNote = {
-        ...note,
-        title: note.title,
-        content: note.content,
-        important: note.important,
+        note,
+        important: note.important
     }
 
     NoteModel.findByIdAndUpdate(id, updateNote, { new: true })
         .then(result => {
-            return res.json(result);
+            return res.end('Nota actualizada');
         })
         .catch(err => next(err));
 });

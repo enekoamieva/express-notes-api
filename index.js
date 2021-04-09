@@ -23,6 +23,7 @@ const usersRouter = require('./controllers/users');
 const loginRouter = require('./controllers/login');
 
 
+
 app.get('/', (req, res) => {
     res.send('<h1>Hello World!</h1>');
 });
@@ -38,6 +39,14 @@ app.use('/api/users', usersRouter);
 app.use('/api/login', loginRouter);
 
 
+//Controlador para las rutas de testing solo accesible en entornos de desarrollo
+if (process.env.NODE_ENV === 'test') {
+    //Controlador para testing
+    const testingRouter = require('./controllers/testing');
+    app.use('/api/testing', testingRouter);
+}
+
+
 //Middleware para capturar los errores. All poner como primer parametro ERROR un CATCH con error buscará este middleware
 app.use((error, req, res, next) => {
     console.error(error);
@@ -51,6 +60,10 @@ app.use((error, req, res, next) => {
     } else if (error.name === 'JsonWebTokenError') {
         return res.status(401).json({
             error: 'El token es incorrecto'
+        })
+    } else if (error.name === 'TokenExpiredError') {
+        return res.status(401).json({
+            error: 'El token ha expirado. Debes de iniciar sesión'
         })
     } else {
         return res.status(500).end();
